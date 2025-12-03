@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Video Certificate Platform</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin: 20px; background:#f9f9f9; }
+  .search-bar { margin-bottom: 30px; }
+  .search-bar input { width: 50%; padding: 10px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
+  .video-container { margin-bottom: 40px; }
+  input[type="text"], input[type="password"] { padding: 8px; font-size: 16px; margin-top: 10px; border: 1px solid #ccc; border-radius: 6px; width: calc(100% - 40px); }
+  button { padding: 10px 20px; font-size: 16px; margin-top: 10px; border: none; border-radius: 8px; background: gray; color: white; cursor:pointer; }
+  button.small { padding:6px 10px; font-size:14px }
+  button.active { background: green; cursor: pointer; }
+  .course-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #1e90ff; }
+  #authBox { border: 2px solid #1e90ff; border-radius: 10px; padding: 20px; max-width: 420px; margin: 30px auto; position: relative;}
+  #statusMsg { max-width:900px; margin:6px auto 18px; color:#333; font-size:14px }
+  .eye-btn { position: absolute; right: 20px; top: 112px; cursor: pointer; font-size: 16px; color: #555; }
+  .progress { font-size:14px; margin-top:6px; color:#333; }
+</style>
+</head>
+<body>
+
+<h1>Watch Videos & Get Your Certificate</h1>
+<div id="statusMsg">Firebase status: <span id="fbStatus">initializing...</span></div>
+
+<!-- Login/Signup Box -->
+<div id="authBox">
+  <h2>Login / Signup</h2>
+  <input type="text" id="userName" placeholder="Enter your name" /><br>
+  <div style="position:relative;">
+    <input type="password" id="userPassword" placeholder="Enter your password" /><br>
+    <span id="togglePassword" class="eye-btn">👁️</span>
+  </div>
+  <button type="button" id="btnSignup" class="small">Sign Up</button>
+  <button type="button" id="btnLogin" class="small">Login</button>
+</div>
+
+<!-- Search Bar + Videos -->
+<div id="videoSection" style="display:none;">
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search for a course...">
+  </div>
+
+  <!-- 11 Courses -->
+  <div id="videos">
+    <div class="video-container"><div class="course-title">HTML Basics Course</div><div id="player1"></div><div id="progress1" class="progress">Progress: 0%</div><br><button id="certBtn1" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">JavaScript Beginner Course</div><div id="player2"></div><div id="progress2" class="progress">Progress: 0%</div><br><button id="certBtn2" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">Python Course</div><div id="player3"></div><div id="progress3" class="progress">Progress: 0%</div><br><button id="certBtn3" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">MS Excel Course</div><div id="player4"></div><div id="progress4" class="progress">Progress: 0%</div><br><button id="certBtn4" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">C++ Full Course</div><div id="player5"></div><div id="progress5" class="progress">Progress: 0%</div><br><button id="certBtn5" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">Machine Learning</div><div id="player6"></div><div id="progress6" class="progress">Progress: 0%</div><br><button id="certBtn6" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">Graphic Designing</div><div id="player7"></div><div id="progress7" class="progress">Progress: 0%</div><br><button id="certBtn7" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">UI/UX Designing</div><div id="player8"></div><div id="progress8" class="progress">Progress: 0%</div><br><button id="certBtn8" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">Digital Marketing</div><div id="player9"></div><div id="progress9" class="progress">Progress: 0%</div><br><button id="certBtn9" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">Tableau Course</div><div id="player10"></div><div id="progress10" class="progress">Progress: 0%</div><br><button id="certBtn10" disabled>Get Certificate</button></div>
+    <div class="video-container"><div class="course-title">Prompt Engineering</div><div id="player11"></div><div id="progress11" class="progress">Progress: 0%</div><br><button id="certBtn11" disabled>Get Certificate</button></div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+// ----- FIREBASE INIT -----
+const fbStatusEl = document.getElementById('fbStatus');
+let db = null;
+try {
+  const firebaseConfig = {
+    apiKey: "AIzaSyDL_vI1z7YjFEw-VgdHtBW4l-VFCeEwg6I",
+    authDomain: "mysite-fbe64.firebaseapp.com",
+    projectId: "mysite-fbe64",
+    storageBucket: "mysite-fbe64.appspot.com",
+    messagingSenderId: "658268004505",
+    appId: "1:658268004505:web:177ab0e06152898a501808",
+    measurementId: "G-1C56F5JXCX"
+  };
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  fbStatusEl.innerText = 'initialized';
+} catch (err) {
+  fbStatusEl.innerText = 'failed to initialize (see console)';
+  console.error('Firebase init error', err);
+}
+
+window.currentUser = null;
+window.cachedProgress = {}; 
+
+const THRESHOLD = 0.7; // 70%
+
+// --- SAVE PROGRESS ---
+async function saveProgress(courseId, addSeconds, certUnlocked){
+  if(!window.currentUser || !db) return;
+  const prevSecs = window.cachedProgress[courseId]?.watchedTime || 0;
+  const dur = players[courseId]?.getDuration() || 0;
+  const totalSecs = Math.min(prevSecs + addSeconds, dur);
+  window.cachedProgress[courseId] = { watchedTime: totalSecs, certUnlocked };
+  const userRef = db.collection('users').doc(window.currentUser);
+  await userRef.set({ progress: window.cachedProgress }, { merge:true });
+}
+
+// --- LOAD PROGRESS ---
+async function loadProgress(){
+  if(!window.currentUser || !db) return;
+  const userRef = db.collection("users").doc(window.currentUser);
+  const docSnap = await userRef.get();
+  if(docSnap.exists){
+    window.cachedProgress = docSnap.data().progress || {};
+  } else {
+    window.cachedProgress = {};
+  }
+}
+
+// --- SIGNUP ---
+async function signup(){
+  const name = document.getElementById('userName').value.trim();
+  const pwd  = document.getElementById('userPassword').value.trim();
+  if(!name || !pwd){ alert('Enter name & password'); return; }
+  const userRef = db.collection('users').doc(name);
+  const existing = await userRef.get();
+  if(existing.exists){ alert('User exists — login instead'); return; }
+  await userRef.set({ name, password: pwd, progress:{} });
+  alert('✅ Sign up successful! Now please login.');
+}
+
+// --- LOGIN ---
+async function login(){
+  const name = document.getElementById('userName').value.trim();
+  const pwd  = document.getElementById('userPassword').value.trim();
+  if(!name || !pwd){ alert('Enter name & password'); return; }
+  const userRef = db.collection('users').doc(name);
+  const docSnap = await userRef.get();
+  if(!docSnap.exists){ alert('User not found'); return; }
+  if(docSnap.data().password!==pwd){ alert('Wrong password'); return; }
+
+  window.currentUser = name;
+  document.getElementById('authBox').style.display='none';
+  document.getElementById('videoSection').style.display='block';
+
+  await loadProgress();
+
+  for(let i=1;i<=11;i++){
+    const saved = window.cachedProgress[i];
+    if(saved?.watchedTime){
+      watchedSeconds[i] = saved.watchedTime;
+      updateProgress(i, saved.watchedTime, true);
+    } else {
+      watchedSeconds[i] = watchedSeconds[i] || 0;
+    }
+    if(saved?.certUnlocked){
+      enableCertificate(i);
+    } else {
+      const dur = players[i]?.getDuration() || 0;
+      if(dur>0 && watchedSeconds[i] >= dur * THRESHOLD){
+        enableCertificate(i);
+        window.cachedProgress[i] = window.cachedProgress[i] || {};
+        window.cachedProgress[i].certUnlocked = true;
+        const userRef = db.collection('users').doc(window.currentUser);
+        userRef.set({ progress: window.cachedProgress }, { merge:true }).catch(()=>{});
+      }
+    }
+  }
+  alert("Welcome "+name+"!");
+}
+
+// --- TOGGLE PASSWORD ---
+document.getElementById('togglePassword').onclick = ()=>{
+  const pwd = document.getElementById('userPassword');
+  pwd.type = pwd.type==='password' ? 'text' : 'password';
+};
+
+// --- YOUTUBE PLAYERS ---
+let players={}, watchedSeconds={}, intervals={}, playingNow=null;
+const courseTitles = {
+  1:"HTML Basics Course",2:"JavaScript Beginner Course",3:"Python Course",4:"MS Excel Course",
+  5:"C++ Full Course",6:"Machine Learning",7:"Graphic Designing",8:"UI/UX Designing",
+  9:"Digital Marketing",10:"Tableau Course",11:"Prompt Engineering"
+};
+const videoIds = ['HcOc7P5BMi4','hKB-YGF14SY','UrsmFxEIp5k','OX-iyb-21tk','e7sAf4SbS_g','LvC68w9JS4Y','e_dv7GBHka8','truRwcI7-kg','kunkYTKFNtI','GbszEsOY3wo','dE5isWx82WU'];
+
+function onYouTubeIframeAPIReady(){
+  for(let i=1;i<=11;i++){
+    createPlayer(i, videoIds[i-1]);
+  }
+}
+
+function createPlayer(num, vid){
+  players[num] = new YT.Player(`player${num}`,{
+    height:'315', width:'560', videoId:vid,
+    events:{
+      onReady: ()=>{ },
+      onStateChange: (e)=> onPlayerStateChange(e,num)
+    }
+  });
+}
+
+function onPlayerStateChange(event,num){
+  if(event.data===YT.PlayerState.PLAYING){
+    if(playingNow && playingNow!==num){ try{ players[playingNow].pauseVideo(); }catch{} }
+    playingNow=num;
+    if(intervals[num]) clearInterval(intervals[num]);
+    intervals[num]=setInterval(async ()=>{
+      watchedSeconds[num] = (watchedSeconds[num] || 0) + 1;
+      updateProgress(num, watchedSeconds[num]);
+      const dur = players[num].getDuration()||0;
+      let unlocked=false;
+      if(dur>0 && watchedSeconds[num] >= dur * THRESHOLD){
+        unlocked=true;
+        enableCertificate(num);
+      }
+      await saveProgress(num, 1, unlocked);
+    },1000);
+  } else {
+    clearInterval(intervals[num]);
+  }
+}
+
+function updateProgress(num, secs){
+  const dur = players[num]?.getDuration()||0;
+  if(dur>0){
+    const pct = Math.min((secs/dur)*100,100).toFixed(2);
+    document.getElementById(`progress${num}`).innerText = `Progress: ${pct}%`;
+  }
+}
+
+function enableCertificate(num){
+  const btn = document.getElementById(`certBtn${num}`);
+  btn.disabled=false;
+  btn.classList.add('active');
+  btn.onclick = ()=> generateCertificate(num);
+}
+
+// --- CERTIFICATE GENERATION ---
+function generateCertificate(num){
+  if(!window.currentUser){ alert('Login first'); return; }
+  const userName = window.currentUser, course = courseTitles[num];
+  const dur = players[num]?.getDuration() || 0;
+
+  // ✅ Hours + Minutes format
+  const hours = Math.floor(dur / 3600);
+  const minutes = Math.floor((dur % 3600) / 60);
+  const durationText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+  const w = window.open('','_blank');
+  w.document.write(`
+  <html><head><title>Certificate</title>
+  <style>
+    body { font-family: 'Georgia', serif; background: #fdfdfd; text-align:center; padding:50px; }
+    .cert {
+      border: 10px solid #2c3e50;
+      border-radius: 15px;
+      padding: 50px;
+      background: linear-gradient(135deg,#fdfbfb,#ebedee);
+      display: inline-block;
+      width: 80%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    h1 { color: #2c3e50; font-size: 38px; margin-bottom: 10px; }
+    h2 { color: #e67e22; font-size: 28px; margin: 15px 0; }
+    p { font-size: 18px; margin: 8px 0; color:#333; }
+    .name { font-size: 30px; font-weight: bold; color: #2980b9; }
+    .footer { margin-top:20px; font-size:14px; color:#555; }
+  </style>
+  </head><body>
+    <div class="cert">
+      <h1>Certificate of Completion</h1>
+      <p>This certifies that</p>
+      <div class="name">${userName}</div>
+      <p>has successfully completed</p>
+      <h2>${course}</h2>
+      <p><b>Course Duration:</b> ${durationText}</p>
+      <div class="footer">Issued on ${new Date().toLocaleDateString()}</div>
+    </div>
+  </body></html>`);
+  w.document.close();
+}
+
+// --- SEARCH ---
+document.getElementById("searchInput").onkeyup=function(){
+  let filter=this.value.toLowerCase();
+  Array.from(document.getElementsByClassName("video-container")).forEach(c=>{
+    let title=c.querySelector(".course-title").innerText.toLowerCase();
+    c.style.display=title.includes(filter)?'':'none';
+  });
+};
+
+// --- BUTTON HOOKS ---
+window.onload=()=>{
+  document.getElementById('btnSignup').onclick=signup;
+  document.getElementById('btnLogin').onclick=login;
+};
+</script>
+</body>
+</html>
